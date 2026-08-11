@@ -1,0 +1,6 @@
+alembic revision upgrade process:
+1. terminal e[alembic revision -m "file name"]
+2. alembic/env.py e target_metadata = None er jaygay models.Base.metadata likhte hobe
+3. alembic.ini te giye sqlalchemy.url = e database er link boshate hobe
+4. upgrade file e giye code ta likhte hobe 
+    ex: op.add_column('Users', sa.Column('phone_number', sa.String(20), nullable=True))
