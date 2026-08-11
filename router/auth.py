@@ -25,6 +25,7 @@ class CreateUsers(BaseModel):
     lastname : str
     password : str
     role : str
+    phone_number: str
 
 def authenticate_user(username, password, db):
         user = db.query(Users).filter(Users.username == username).first()
@@ -73,7 +74,9 @@ def createuser(db: db_dependency, new_user: CreateUsers):
         lastname = new_user.lastname,
         hash_password = bcrypt_context.hash(new_user.password),
         is_active = True,
-        role = new_user.role
+        role = new_user.role,
+        phone_number = new_user.phone_number
+        
     )
     db.add(user_model)
     db.commit()
