@@ -1,11 +1,11 @@
 from fastapi import FastAPI, APIRouter,Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import timedelta, datetime, timezone
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from models import Users
 from fastapi.responses import JSONResponse
 from passlib.context import CryptContext
-from typing import Annotated
+from typing import Annotated, Optional
 from database import SessionLocal
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt,JWTError
@@ -26,6 +26,14 @@ class CreateUsers(BaseModel):
     password : str
     role : str
     phone_number: str
+
+class UpdateUser(BaseModel):
+    email : Optional[str] = None
+    username: Optional[str] = Field(default=None)
+    firstname: Optional[str] = Field(default=None)
+    lastname: Optional[str] = Field(default=None)
+    phone_number: Optional[str] = Field(default=None)
+
 
 def authenticate_user(username, password, db):
         user = db.query(Users).filter(Users.username == username).first()
@@ -64,6 +72,7 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session, Depends(get_db)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 @router.post('/createuser')
 def createuser(db: db_dependency, new_user: CreateUsers):
@@ -93,3 +102,19 @@ def login_user(db : db_dependency, form_data: Annotated[OAuth2PasswordRequestFor
 
     token = create_access_token(user.username, user.id, user.role,timedelta(minutes=30))
     return {'access_token': token, 'token_type': 'bearer'}
+
+@router.put('/editUser')
+def update_todos(user : user_dependency, db : db_dependency, update_user : UpdateUser):
+    if user is None:
+        raise HTTPException(status_code=401, details='Failed Authentication')
+    
+    user = db.query(Users).filter(Users.id == user.get("id")).first()
+
+    update_data = update_user.model_dump(exclude_unset=True)
+
+    for key,value in update_data.items():
+        setattr(user,key,value)
+
+    db.commit()
+
+    return JSONResponse(status_code=200, content={'messege': 'User updated sucessfully'})
